@@ -53,9 +53,9 @@ public class VideoFolderAdapter extends RecyclerView.Adapter<VideoFolderAdapter.
     int numberOfFiles(String folderName)
     {
         int count=0;
-        for(MediaFiles mediaFiles: mediaFiles)
+        for(MediaFiles mediaFiles1: mediaFiles)
         {
-            if(mediaFiles.getPath().substring(0,mediaFiles.getPath().lastIndexOf("/")).equalsIgnoreCase(folderName))
+            if(mediaFiles1.getPath().substring(0,mediaFiles1.getPath().lastIndexOf("/")).equalsIgnoreCase(folderName))
             {
                 count += 1;
 
