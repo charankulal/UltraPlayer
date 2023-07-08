@@ -22,7 +22,8 @@
             android:configChanges="orientation|screenSize|layoutDirection"/>
         <activity
             android:name=".VideoFilesActivity"
-            android:exported="false" />
+            android:exported="false"
+            android:parentActivityName=".MainActivity"/>
         <activity
             android:name=".AllowAccessActivity"
             android:exported="false" />

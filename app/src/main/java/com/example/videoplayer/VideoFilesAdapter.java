@@ -3,6 +3,7 @@ package com.example.videoplayer;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.ContentResolver;
+import android.content.ContentUris;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -131,6 +132,54 @@ public class VideoFilesAdapter extends RecyclerView.Adapter<VideoFilesAdapter.Vi
                         });
                         alertDialog.create().show();
                         bottomSheetDialog.dismiss();
+                    }
+                });
+                bsView.findViewById(R.id.bs_share).setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        Uri uri=Uri.parse(videoList.get(position).getPath());
+                        Intent shareintent= new Intent(Intent.ACTION_SEND);
+                        shareintent.setType("video/*");
+                        shareintent.putExtra(Intent.EXTRA_STREAM,uri);
+                        context.startActivity(Intent.createChooser(shareintent,"Share Video Via"));
+                        bottomSheetDialog.dismiss();
+                    }
+                });
+
+                bsView.findViewById(R.id.bs_delete).setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        AlertDialog.Builder alertDialog = new AlertDialog.Builder(context);
+                        alertDialog.setTitle("Delete");
+                        alertDialog.setMessage("Do you want to delete this video?");
+                        alertDialog.setPositiveButton("Delete", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                Uri contentUri = ContentUris.withAppendedId(MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
+                                        Long.parseLong(videoList.get(position).getId()));
+
+                                File file=new File(videoList.get(position).getPath());
+                                boolean deleted = file.delete();
+                                if(deleted)
+                                {
+                                    context.getContentResolver().delete(contentUri,null,null);
+                                    videoList.remove(position);
+                                    notifyItemRemoved(position);
+                                    notifyItemRangeChanged(position,videoList.size());
+                                    Toast.makeText(context, "Video deleted", Toast.LENGTH_SHORT).show();
+                                }else {
+                                    Toast.makeText(context, "Can't be deleted", Toast.LENGTH_SHORT).show();
+                                }
+                            }
+                        });
+                        alertDialog.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                dialog.dismiss();
+                            }
+                        });
+                        alertDialog.show();
+                        bottomSheetDialog.dismiss();;
                     }
                 });
                 bottomSheetDialog.setContentView(bsView);
