@@ -37,6 +37,7 @@ public class VideoFilesAdapter extends RecyclerView.Adapter<VideoFilesAdapter.Vi
     private ArrayList<MediaFiles> videoList;
     private Context context;
     BottomSheetDialog bottomSheetDialog;
+    String files;
 
 
     public VideoFilesAdapter(ArrayList<MediaFiles> videoList, Context context) {
