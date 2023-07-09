@@ -5,6 +5,8 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.annotation.SuppressLint;
+import android.content.pm.ActivityInfo;
+import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
@@ -155,7 +157,26 @@ public class VideoPlayerActivity extends AppCompatActivity implements View.OnCli
                     }
                 }
                 if (position == 3) {
-                    Toast.makeText(VideoPlayerActivity.this, "Fourth", Toast.LENGTH_SHORT).show();
+                    if (getResources().getConfiguration().orientation== Configuration.ORIENTATION_PORTRAIT)
+                    {
+                        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+                        playBackIconsAdapter.notifyDataSetChanged();
+                    }else if (getResources().getConfiguration().orientation==Configuration.ORIENTATION_LANDSCAPE)
+                    {
+                        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+                        playBackIconsAdapter.notifyDataSetChanged();
+                    }
+                }
+                if (position==4){
+                    //Volume
+                    VolumeDialog volumeDialog=new VolumeDialog();
+                    volumeDialog.show(getSupportFragmentManager(),"dialog");
+                    playBackIconsAdapter.notifyDataSetChanged();
+
+                }
+                if (position==5)
+                {
+                    //brightness
                 }
             }
         });
