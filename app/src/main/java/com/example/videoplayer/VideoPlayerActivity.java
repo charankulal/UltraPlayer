@@ -1,14 +1,18 @@
 package com.example.videoplayer;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.annotation.SuppressLint;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
+import android.graphics.Bitmap;
 import android.media.AudioManager;
+import android.media.MediaMetadataRetriever;
 import android.media.audiofx.AudioEffect;
 import android.net.Uri;
 import android.os.Bundle;
@@ -26,6 +30,7 @@ import com.google.android.exoplayer2.ExoPlayer;
 import com.google.android.exoplayer2.ForwardingPlayer;
 import com.google.android.exoplayer2.MediaItem;
 import com.google.android.exoplayer2.PlaybackException;
+import com.google.android.exoplayer2.PlaybackParameters;
 import com.google.android.exoplayer2.Player;
 import com.google.android.exoplayer2.SimpleExoPlayer;
 import com.google.android.exoplayer2.source.ConcatenatingMediaSource;
@@ -34,6 +39,7 @@ import com.google.android.exoplayer2.source.ProgressiveMediaSource;
 import com.google.android.exoplayer2.ui.AspectRatioFrameLayout;
 import com.google.android.exoplayer2.ui.PlayerView;
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory;
+import com.google.android.exoplayer2.util.Log;
 import com.google.android.exoplayer2.util.Util;
 
 import java.io.File;
@@ -66,6 +72,8 @@ public class VideoPlayerActivity extends AppCompatActivity implements View.OnCli
     View nightMode;
     boolean dark = false;
     boolean mute=false;
+    PlaybackParameters parameters;
+    float speed;
 
     @SuppressLint("MissingInflatedId")
     @Override
@@ -78,6 +86,7 @@ public class VideoPlayerActivity extends AppCompatActivity implements View.OnCli
         position = getIntent().getIntExtra("position", 1);
         videoTitle = getIntent().getStringExtra("video_title");
         mVideoFiles = getIntent().getExtras().getParcelableArrayList("videoArrayList");
+        screenOrientaion();
         nextButton = findViewById(R.id.exo_next);
         prevButton = findViewById(R.id.exo_prev);
         title = findViewById(R.id.video_title);
@@ -195,6 +204,50 @@ public class VideoPlayerActivity extends AppCompatActivity implements View.OnCli
                     }
                     playBackIconsAdapter.notifyDataSetChanged();
                 }
+                if (position==7)
+                {
+                    AlertDialog.Builder alertDialog=new AlertDialog.Builder(VideoPlayerActivity.this);
+                    alertDialog.setTitle("Select Playback Speed").setPositiveButton("Ok",null);
+                    String[] items={"0.5x","1.0x","1.25x","1.5x","2.0x"};
+                    int checkedItem =-1;
+                    alertDialog.setSingleChoiceItems(items, checkedItem, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            switch (which){
+                                case 0:
+                                    speed=0.5f;
+                                    parameters=new PlaybackParameters(speed);
+                                    player.setPlaybackParameters(parameters);
+                                    break;
+                                case 1:
+                                    speed=1f;
+                                    parameters=new PlaybackParameters(speed);
+                                    player.setPlaybackParameters(parameters);
+
+                                    break;
+                                case 2:
+                                    speed=1.25f;
+                                    parameters=new PlaybackParameters(speed);
+                                    player.setPlaybackParameters(parameters);
+                                    break;
+                                case 3:
+                                    speed=1.5f;
+                                    parameters=new PlaybackParameters(speed);
+                                    player.setPlaybackParameters(parameters);
+                                    break;
+                                case 4: speed=2f;
+                                    parameters=new PlaybackParameters(speed);
+                                    player.setPlaybackParameters(parameters);
+                                    break;
+                                default:
+                                    break;
+
+                            }
+                        }
+                    });
+                    AlertDialog alertDialog1=alertDialog.create();
+                    alertDialog1.show();
+                }
             }
         });
         playVideo();
@@ -215,10 +268,32 @@ public class VideoPlayerActivity extends AppCompatActivity implements View.OnCli
         }
         playerView.setPlayer(player);
         playerView.setKeepScreenOn(true);
-
+        player.setPlaybackParameters(parameters);
         player.prepare(concatenatingMediaSource);
         player.seekTo(position, C.TIME_UNSET);
         playError();
+    }
+
+    private void screenOrientaion(){
+        try {
+            MediaMetadataRetriever retriever=new MediaMetadataRetriever();
+            Bitmap bitmap;
+            String path=mVideoFiles.get(position).getPath();
+            Uri uri=Uri.parse(path);
+            retriever.setDataSource(this,uri);
+            bitmap=retriever.getFrameAtTime();
+
+            int videoWidth=bitmap.getWidth();
+            int videoHeight=bitmap.getHeight();
+            if(videoWidth>videoHeight){
+                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+            }else {
+                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+            }
+        }catch (Exception e)
+        {
+            Log.e("MediaMetaDataRetriever","ScreenOrientation: ");
+        }
     }
 
     private void playError() {
