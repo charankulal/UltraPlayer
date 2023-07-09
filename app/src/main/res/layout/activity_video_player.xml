@@ -22,5 +22,12 @@
         app:shutter_background_color="@color/white"
         app:use_controller="true"         />
 
+    <View
+        android:id="@+id/night_mode"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/light_dark"
+        android:visibility="gone"/>
+
 
 </RelativeLayout>

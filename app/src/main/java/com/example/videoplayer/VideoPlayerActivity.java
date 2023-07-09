@@ -35,26 +35,32 @@ import java.io.File;
 import java.util.ArrayList;
 
 public class VideoPlayerActivity extends AppCompatActivity implements View.OnClickListener {
-    ArrayList<MediaFiles> mVideoFiles= new ArrayList<>();
+    ArrayList<MediaFiles> mVideoFiles = new ArrayList<>();
     PlayerView playerView;
     ExoPlayer player;
     int position;
     String videoTitle;
     TextView title;
     ConcatenatingMediaSource concatenatingMediaSource;
-    ImageView nextButton,prevButton,videoBack,lock,unlock,scaling;
+    ImageView nextButton, prevButton, videoBack, lock, unlock, scaling;
 
     private ControlsMode controlsMode;
-    public enum ControlsMode{
-        LOCK,FULLSCREEN;
+
+    public enum ControlsMode {
+        LOCK, FULLSCREEN;
     }
 
     RelativeLayout root;
 
     //Icon models & playbackiconsadapter
-    private ArrayList<IconModel> iconModels=new ArrayList<>();
+    private ArrayList<IconModel> iconModels = new ArrayList<>();
     PlayBackIconsAdapter playBackIconsAdapter;
     RecyclerView recyclerViewicons;
+    boolean expand = false;
+
+    View nightMode;
+    boolean dark = false;
+    boolean mute=false;
 
     @SuppressLint("MissingInflatedId")
     @Override
@@ -63,19 +69,20 @@ public class VideoPlayerActivity extends AppCompatActivity implements View.OnCli
         setFullScreen();
         setContentView(R.layout.activity_video_player);
         getSupportActionBar().hide();
-        playerView=findViewById(R.id.exoplayer_view);
-        position=getIntent().getIntExtra("position",1);
-        videoTitle=getIntent().getStringExtra("video_title");
-        mVideoFiles=getIntent().getExtras().getParcelableArrayList("videoArrayList");
-        nextButton=findViewById(R.id.exo_next);
-        prevButton=findViewById(R.id.exo_prev);
-        title=findViewById(R.id.video_title);
-        videoBack=findViewById(R.id.video_back);
-        lock=findViewById(R.id.lock_unlock);
-        unlock=findViewById(R.id.unlock);
-        scaling=findViewById(R.id.scaling);
+        playerView = findViewById(R.id.exoplayer_view);
+        position = getIntent().getIntExtra("position", 1);
+        videoTitle = getIntent().getStringExtra("video_title");
+        mVideoFiles = getIntent().getExtras().getParcelableArrayList("videoArrayList");
+        nextButton = findViewById(R.id.exo_next);
+        prevButton = findViewById(R.id.exo_prev);
+        title = findViewById(R.id.video_title);
+        videoBack = findViewById(R.id.video_back);
+        lock = findViewById(R.id.lock_unlock);
+        unlock = findViewById(R.id.unlock);
+        scaling = findViewById(R.id.scaling);
         root = findViewById(R.id.root_layout);
-        recyclerViewicons=findViewById(R.id.recycler_view_icons);
+        nightMode=findViewById(R.id.night_mode);
+        recyclerViewicons = findViewById(R.id.recycler_view_icons);
         title.setText(videoTitle);
         nextButton.setOnClickListener(this);
         prevButton.setOnClickListener(this);
@@ -84,32 +91,88 @@ public class VideoPlayerActivity extends AppCompatActivity implements View.OnCli
         unlock.setOnClickListener(this);
         scaling.setOnClickListener(firstListener);
 
-        iconModels.add(new IconModel(R.drawable.right,""));
-        iconModels.add(new IconModel(R.drawable.baseline_nightlight_24,"Night"));
-        iconModels.add(new IconModel(R.drawable.volume_off,"Mute"));
-        iconModels.add(new IconModel(R.drawable.rotation,"Rotate"));
+        iconModels.add(new IconModel(R.drawable.right, ""));
+        iconModels.add(new IconModel(R.drawable.baseline_nightlight_24, "Night"));
+        iconModels.add(new IconModel(R.drawable.volume_off, "Mute"));
+        iconModels.add(new IconModel(R.drawable.rotation, "Rotate"));
 
-        playBackIconsAdapter = new PlayBackIconsAdapter(iconModels,this);
-        LinearLayoutManager linearLayoutManager=new LinearLayoutManager(this,RecyclerView.HORIZONTAL,true);
+        playBackIconsAdapter = new PlayBackIconsAdapter(iconModels, this);
+        LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this, RecyclerView.HORIZONTAL, true);
         recyclerViewicons.setLayoutManager(linearLayoutManager);
         recyclerViewicons.setAdapter(playBackIconsAdapter);
         playBackIconsAdapter.notifyDataSetChanged();
+        playBackIconsAdapter.setOnItemClickListener(new PlayBackIconsAdapter.OnItemClickListener() {
+            @SuppressLint("Range")
+            @Override
+            public void onItemClick(int position) {
+                if (position == 0) {
+                    if (expand) {
+                        iconModels.clear();
+                        iconModels.add(new IconModel(R.drawable.right, ""));
+                        iconModels.add(new IconModel(R.drawable.baseline_nightlight_24, "Night"));
+                        iconModels.add(new IconModel(R.drawable.volume_off, "Mute"));
+                        iconModels.add(new IconModel(R.drawable.rotation, "Rotate"));
+                        playBackIconsAdapter.notifyDataSetChanged();
+                        expand = false;
+                    } else {
+                        if (iconModels.size() == 4) {
+                            iconModels.add(new IconModel(R.drawable.volume, "Volume"));
+                            iconModels.add(new IconModel(R.drawable.high_brightness, "Brightness"));
+                            iconModels.add(new IconModel(R.drawable.equalizer, "Equalizer"));
+                            iconModels.add(new IconModel(R.drawable.speed, "Speed"));
+                            iconModels.add(new IconModel(R.drawable.subtitle, "Sub Title"));
+                        }
+                        iconModels.set(position, new IconModel(R.drawable.left_arrow, ""));
+                        playBackIconsAdapter.notifyDataSetChanged();
+                        expand = true;
+                    }
+                }
+                if (position == 1) {
+                    if (dark) {
+                        nightMode.setVisibility(View.GONE);
+                        iconModels.set(position,new IconModel(R.drawable.baseline_nightlight_24,"Night"));
+                        playBackIconsAdapter.notifyDataSetChanged();
+                        dark = false;
+                    } else {
+                        nightMode.setVisibility(View.VISIBLE);
 
+                        iconModels.set(position, new IconModel(R.drawable.baseline_nightlight_24, "Day"));
+                        playBackIconsAdapter.notifyDataSetChanged();
+                        dark = true;
+                    }
+                }
+                if (position == 2) {
+                    if(mute){
+                        player.setVolume(100);
+                        iconModels.set(position,new IconModel(R.drawable.volume_off,"Mute"));
+                        playBackIconsAdapter.notifyDataSetChanged();
+                        mute=false;
+                    }else{
+                        player.setVolume(0);
+                        iconModels.set(position,new IconModel(R.drawable.volume,"Unmute"));
+                        playBackIconsAdapter.notifyDataSetChanged();
+                        mute=true;
+                    }
+                }
+                if (position == 3) {
+                    Toast.makeText(VideoPlayerActivity.this, "Fourth", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
         playVideo();
 
     }
 
     private void playVideo() {
-        String path=mVideoFiles.get(position).getPath();
-        Uri uri=Uri.parse(path);
+        String path = mVideoFiles.get(position).getPath();
+        Uri uri = Uri.parse(path);
         player = new ExoPlayer.Builder(this).setSeekForwardIncrementMs(10000L)
                 .setSeekBackIncrementMs(10000L).build();
-        DefaultDataSourceFactory dataSourceFactory=new DefaultDataSourceFactory(this, Util.getUserAgent(this,"App"));
-        concatenatingMediaSource=new ConcatenatingMediaSource();
-        for(int i=0;i<mVideoFiles.size();i++)
-        {
+        DefaultDataSourceFactory dataSourceFactory = new DefaultDataSourceFactory(this, Util.getUserAgent(this, "App"));
+        concatenatingMediaSource = new ConcatenatingMediaSource();
+        for (int i = 0; i < mVideoFiles.size(); i++) {
             new File(String.valueOf(mVideoFiles.get(i)));
-            MediaSource mediaSource=new ProgressiveMediaSource.Factory(dataSourceFactory).createMediaSource(MediaItem.fromUri(Uri.parse(String.valueOf(uri))));
+            MediaSource mediaSource = new ProgressiveMediaSource.Factory(dataSourceFactory).createMediaSource(MediaItem.fromUri(Uri.parse(String.valueOf(uri))));
             concatenatingMediaSource.addMediaSource(mediaSource);
         }
         playerView.setPlayer(player);
@@ -130,6 +193,7 @@ public class VideoPlayerActivity extends AppCompatActivity implements View.OnCli
         });
         player.setPlayWhenReady(true);
     }
+
     @Override
     protected void onPause() {
 
@@ -168,8 +232,7 @@ public class VideoPlayerActivity extends AppCompatActivity implements View.OnCli
     @Override
     public void onBackPressed() {
         super.onBackPressed();
-        if(player.isPlaying())
-        {
+        if (player.isPlaying()) {
             player.stop();
         }
     }
@@ -180,63 +243,60 @@ public class VideoPlayerActivity extends AppCompatActivity implements View.OnCli
         player.setPlayWhenReady(true);
         player.getPlaybackState();
     }
-    private void setFullScreen(){
+
+    private void setFullScreen() {
         requestWindowFeature(Window.FEATURE_NO_TITLE);
-        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
     }
 
     @Override
     public void onClick(View v) {
-        if(v.getId()==R.id.video_back)
-        {
-            if (player!=null){
+        if (v.getId() == R.id.video_back) {
+            if (player != null) {
                 player.release();
 
             }
             finish();
         }
-        if(v.getId()==R.id.lock_unlock)
-        {
+        if (v.getId() == R.id.lock_unlock) {
 
-            controlsMode=ControlsMode.FULLSCREEN;
+            controlsMode = ControlsMode.FULLSCREEN;
             root.setVisibility(View.VISIBLE);
             lock.setVisibility(View.INVISIBLE);
             Toast.makeText(this, "Unlocked", Toast.LENGTH_SHORT).show();
 
         }
-        if(v.getId()==R.id.unlock)
-        {
-            controlsMode=ControlsMode.LOCK;
+        if (v.getId() == R.id.unlock) {
+            controlsMode = ControlsMode.LOCK;
             root.setVisibility(View.INVISIBLE);
             lock.setVisibility(View.VISIBLE);
             Toast.makeText(this, "Locked", Toast.LENGTH_SHORT).show();
 
         }
 
-        if(v.getId()==R.id.exo_next){
-            try{
+        if (v.getId() == R.id.exo_next) {
+            try {
                 player.stop();
                 position++;
                 playVideo();
-            }catch (Exception e)
-            {
+            } catch (Exception e) {
                 Toast.makeText(this, "No Next Video in PlayList", Toast.LENGTH_SHORT).show();
                 finish();
             }
         }
-        if(v.getId()==R.id.exo_prev){
-            try{
+        if (v.getId() == R.id.exo_prev) {
+            try {
                 player.stop();
                 position--;
                 playVideo();
-            }catch (Exception e)
-            {
+            } catch (Exception e) {
                 Toast.makeText(this, "No Previous Video in PlayList", Toast.LENGTH_SHORT).show();
                 finish();
             }
         }
     }
-    View.OnClickListener firstListener=new View.OnClickListener() {
+
+    View.OnClickListener firstListener = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
             playerView.setResizeMode(AspectRatioFrameLayout.RESIZE_MODE_FILL);
@@ -247,7 +307,7 @@ public class VideoPlayerActivity extends AppCompatActivity implements View.OnCli
 
         }
     };
-    View.OnClickListener secondListener=new View.OnClickListener() {
+    View.OnClickListener secondListener = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
             playerView.setResizeMode(AspectRatioFrameLayout.RESIZE_MODE_ZOOM);
@@ -258,7 +318,7 @@ public class VideoPlayerActivity extends AppCompatActivity implements View.OnCli
             scaling.setOnClickListener(thirdListener);
         }
     };
-    View.OnClickListener thirdListener=new View.OnClickListener() {
+    View.OnClickListener thirdListener = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
             playerView.setResizeMode(AspectRatioFrameLayout.RESIZE_MODE_FIT);
