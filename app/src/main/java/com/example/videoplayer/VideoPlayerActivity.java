@@ -5,8 +5,11 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.annotation.SuppressLint;
+import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
+import android.media.AudioManager;
+import android.media.audiofx.AudioEffect;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
@@ -177,6 +180,20 @@ public class VideoPlayerActivity extends AppCompatActivity implements View.OnCli
                 if (position==5)
                 {
                     //brightness
+                    BrightnessDialog brightnessDialog=new BrightnessDialog();
+                    brightnessDialog.show(getSupportFragmentManager(),"dialog");
+                    playBackIconsAdapter.notifyDataSetChanged();
+                }
+                if(position==6)
+                {
+                    Intent intent=new Intent(AudioEffect.ACTION_DISPLAY_AUDIO_EFFECT_CONTROL_PANEL);
+                    if(intent.resolveActivity(getPackageManager())!=null)
+                    {
+                        startActivityForResult(intent,123);
+                    }else {
+                        Toast.makeText(VideoPlayerActivity.this, "No equalizer found", Toast.LENGTH_SHORT).show();
+                    }
+                    playBackIconsAdapter.notifyDataSetChanged();
                 }
             }
         });
