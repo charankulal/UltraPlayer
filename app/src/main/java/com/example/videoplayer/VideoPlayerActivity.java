@@ -1,6 +1,8 @@
 package com.example.videoplayer;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import android.annotation.SuppressLint;
 import android.net.Uri;
@@ -9,6 +11,7 @@ import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -48,6 +51,11 @@ public class VideoPlayerActivity extends AppCompatActivity implements View.OnCli
 
     RelativeLayout root;
 
+    //Icon models & playbackiconsadapter
+    private ArrayList<IconModel> iconModels=new ArrayList<>();
+    PlayBackIconsAdapter playBackIconsAdapter;
+    RecyclerView recyclerViewicons;
+
     @SuppressLint("MissingInflatedId")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -67,6 +75,7 @@ public class VideoPlayerActivity extends AppCompatActivity implements View.OnCli
         unlock=findViewById(R.id.unlock);
         scaling=findViewById(R.id.scaling);
         root = findViewById(R.id.root_layout);
+        recyclerViewicons=findViewById(R.id.recycler_view_icons);
         title.setText(videoTitle);
         nextButton.setOnClickListener(this);
         prevButton.setOnClickListener(this);
@@ -74,6 +83,17 @@ public class VideoPlayerActivity extends AppCompatActivity implements View.OnCli
         lock.setOnClickListener(this);
         unlock.setOnClickListener(this);
         scaling.setOnClickListener(firstListener);
+
+        iconModels.add(new IconModel(R.drawable.right,""));
+        iconModels.add(new IconModel(R.drawable.baseline_nightlight_24,"Night"));
+        iconModels.add(new IconModel(R.drawable.volume_off,"Mute"));
+        iconModels.add(new IconModel(R.drawable.rotation,"Rotate"));
+
+        playBackIconsAdapter = new PlayBackIconsAdapter(iconModels,this);
+        LinearLayoutManager linearLayoutManager=new LinearLayoutManager(this,RecyclerView.HORIZONTAL,true);
+        recyclerViewicons.setLayoutManager(linearLayoutManager);
+        recyclerViewicons.setAdapter(playBackIconsAdapter);
+        playBackIconsAdapter.notifyDataSetChanged();
 
         playVideo();
 
