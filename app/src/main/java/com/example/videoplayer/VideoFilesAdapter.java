@@ -7,6 +7,7 @@ import android.content.ContentUris;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.media.MediaMetadataRetriever;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.SystemClock;
@@ -37,7 +38,7 @@ public class VideoFilesAdapter extends RecyclerView.Adapter<VideoFilesAdapter.Vi
     private ArrayList<MediaFiles> videoList;
     private Context context;
     BottomSheetDialog bottomSheetDialog;
-    String files;
+
 
 
     public VideoFilesAdapter(ArrayList<MediaFiles> videoList, Context context) {
@@ -114,6 +115,7 @@ public class VideoFilesAdapter extends RecyclerView.Adapter<VideoFilesAdapter.Vi
                                         Intent intent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
                                         intent.setData(Uri.fromFile(newFile));
                                         context.getApplicationContext().sendBroadcast(intent);
+                                        notifyItemChanged(position);
 
                                         notifyDataSetChanged();
                                         Toast.makeText(context, "Video Renamed", Toast.LENGTH_SHORT).show();
@@ -167,6 +169,7 @@ public class VideoFilesAdapter extends RecyclerView.Adapter<VideoFilesAdapter.Vi
                                     videoList.remove(position);
                                     notifyItemRemoved(position);
                                     notifyItemRangeChanged(position,videoList.size());
+                                    notifyDataSetChanged();
                                     Toast.makeText(context, "Video deleted", Toast.LENGTH_SHORT).show();
                                 }else {
                                     Toast.makeText(context, "Can't be deleted", Toast.LENGTH_SHORT).show();
@@ -181,6 +184,41 @@ public class VideoFilesAdapter extends RecyclerView.Adapter<VideoFilesAdapter.Vi
                         });
                         alertDialog.show();
                         bottomSheetDialog.dismiss();;
+                    }
+                });
+
+                bsView.findViewById(R.id.bs_properties).setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        AlertDialog.Builder alertDialog=new AlertDialog.Builder(context);
+                        alertDialog.setTitle("Properties");
+
+
+                        String one="File: "+videoList.get(position).getDisplayName();
+                        String path=videoList.get(position).getPath();
+                        int indexOfPath=path.lastIndexOf("/");
+                        String two="Path: "+path.substring(0,indexOfPath);
+                        String three="Size: "+android.text.format.Formatter.formatFileSize(context, Long.parseLong(size));
+                        String four="Length: "+timeConversion((long) milliseconds);
+                        String formatName=videoList.get(position).getDisplayName();
+                        int index= formatName.lastIndexOf(".");
+                        String nameFormat=formatName.substring(index+1);
+                        String five= "Format: "+nameFormat;
+
+                        MediaMetadataRetriever mediaMetadataRetriever=new MediaMetadataRetriever();
+                        mediaMetadataRetriever.setDataSource(videoList.get(position).getPath());
+                        String height=mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT);
+                        String width=mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH);
+                        String six ="Resolution: "+width+"x"+height;
+                        alertDialog.setMessage(one+"\n\n"+two+"\n\n"+three+"\n\n"+four+"\n\n"+five+"\n\n"+six);
+                        alertDialog.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                dialog.dismiss();
+                            }
+                        });
+                        alertDialog.show();
+                        bottomSheetDialog.dismiss();
                     }
                 });
                 bottomSheetDialog.setContentView(bsView);
@@ -220,11 +258,12 @@ public class VideoFilesAdapter extends RecyclerView.Adapter<VideoFilesAdapter.Vi
 
         }
     }
+    @SuppressLint("DefaultLocale")
     public String timeConversion(long value){
         String videoTime;
         int duration= (int) value;
         int hrs=(duration/3600000);
-        int mns=(duration/60000)%60000;
+        int mns=(duration/60000)%60000-hrs*60;
         int secs=duration%60000/1000;
         if(hrs>0)
         {
@@ -235,4 +274,11 @@ public class VideoFilesAdapter extends RecyclerView.Adapter<VideoFilesAdapter.Vi
         }
         return videoTime;
     }
+    void updateVideoFiles(ArrayList<MediaFiles> files)
+    {
+        videoList=new ArrayList<>();
+        videoList.addAll(files);
+        notifyDataSetChanged();
+    }
+
 }

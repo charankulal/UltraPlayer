@@ -9,6 +9,7 @@ import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.ImageView;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -22,6 +23,7 @@ import com.google.android.exoplayer2.SimpleExoPlayer;
 import com.google.android.exoplayer2.source.ConcatenatingMediaSource;
 import com.google.android.exoplayer2.source.MediaSource;
 import com.google.android.exoplayer2.source.ProgressiveMediaSource;
+import com.google.android.exoplayer2.ui.AspectRatioFrameLayout;
 import com.google.android.exoplayer2.ui.PlayerView;
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory;
 import com.google.android.exoplayer2.util.Util;
@@ -37,8 +39,14 @@ public class VideoPlayerActivity extends AppCompatActivity implements View.OnCli
     String videoTitle;
     TextView title;
     ConcatenatingMediaSource concatenatingMediaSource;
-    ImageView nextButton,prevButton;
+    ImageView nextButton,prevButton,videoBack,lock,unlock,scaling;
 
+    private ControlsMode controlsMode;
+    public enum ControlsMode{
+        LOCK,FULLSCREEN;
+    }
+
+    RelativeLayout root;
 
     @SuppressLint("MissingInflatedId")
     @Override
@@ -54,9 +62,18 @@ public class VideoPlayerActivity extends AppCompatActivity implements View.OnCli
         nextButton=findViewById(R.id.exo_next);
         prevButton=findViewById(R.id.exo_prev);
         title=findViewById(R.id.video_title);
+        videoBack=findViewById(R.id.video_back);
+        lock=findViewById(R.id.lock_unlock);
+        unlock=findViewById(R.id.unlock);
+        scaling=findViewById(R.id.scaling);
+        root = findViewById(R.id.root_layout);
         title.setText(videoTitle);
         nextButton.setOnClickListener(this);
         prevButton.setOnClickListener(this);
+        videoBack.setOnClickListener(this);
+        lock.setOnClickListener(this);
+        unlock.setOnClickListener(this);
+        scaling.setOnClickListener(firstListener);
 
         playVideo();
 
@@ -150,6 +167,32 @@ public class VideoPlayerActivity extends AppCompatActivity implements View.OnCli
 
     @Override
     public void onClick(View v) {
+        if(v.getId()==R.id.video_back)
+        {
+            if (player!=null){
+                player.release();
+
+            }
+            finish();
+        }
+        if(v.getId()==R.id.lock_unlock)
+        {
+
+            controlsMode=ControlsMode.FULLSCREEN;
+            root.setVisibility(View.VISIBLE);
+            lock.setVisibility(View.INVISIBLE);
+            Toast.makeText(this, "Unlocked", Toast.LENGTH_SHORT).show();
+
+        }
+        if(v.getId()==R.id.unlock)
+        {
+            controlsMode=ControlsMode.LOCK;
+            root.setVisibility(View.INVISIBLE);
+            lock.setVisibility(View.VISIBLE);
+            Toast.makeText(this, "Locked", Toast.LENGTH_SHORT).show();
+
+        }
+
         if(v.getId()==R.id.exo_next){
             try{
                 player.stop();
@@ -173,4 +216,36 @@ public class VideoPlayerActivity extends AppCompatActivity implements View.OnCli
             }
         }
     }
+    View.OnClickListener firstListener=new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            playerView.setResizeMode(AspectRatioFrameLayout.RESIZE_MODE_FILL);
+            player.setVideoScalingMode(C.VIDEO_SCALING_MODE_DEFAULT);
+            scaling.setImageResource(R.drawable.fullscreen);
+            Toast.makeText(VideoPlayerActivity.this, "Full Screen", Toast.LENGTH_SHORT).show();
+            scaling.setOnClickListener(secondListener);
+
+        }
+    };
+    View.OnClickListener secondListener=new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            playerView.setResizeMode(AspectRatioFrameLayout.RESIZE_MODE_ZOOM);
+            player.setVideoScalingMode(C.VIDEO_SCALING_MODE_DEFAULT);
+            scaling.setImageResource(R.drawable.zoom);
+
+            Toast.makeText(VideoPlayerActivity.this, "Zoom", Toast.LENGTH_SHORT).show();
+            scaling.setOnClickListener(thirdListener);
+        }
+    };
+    View.OnClickListener thirdListener=new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            playerView.setResizeMode(AspectRatioFrameLayout.RESIZE_MODE_FIT);
+            player.setVideoScalingMode(C.VIDEO_SCALING_MODE_DEFAULT);
+            scaling.setImageResource(R.drawable.fit);
+            Toast.makeText(VideoPlayerActivity.this, "Fit", Toast.LENGTH_SHORT).show();
+            scaling.setOnClickListener(firstListener);
+        }
+    };
 }
