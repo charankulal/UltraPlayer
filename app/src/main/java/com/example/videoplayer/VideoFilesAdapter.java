@@ -7,6 +7,7 @@ import android.content.ContentUris;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.Color;
 import android.media.MediaMetadataRetriever;
 import android.net.Uri;
 import android.os.Bundle;
@@ -38,12 +39,14 @@ public class VideoFilesAdapter extends RecyclerView.Adapter<VideoFilesAdapter.Vi
     private ArrayList<MediaFiles> videoList;
     private Context context;
     BottomSheetDialog bottomSheetDialog;
+    private int viewType;
 
 
 
-    public VideoFilesAdapter(ArrayList<MediaFiles> videoList, Context context) {
+    public VideoFilesAdapter(ArrayList<MediaFiles> videoList, Context context,int viewType) {
         this.videoList = videoList;
         this.context = context;
+        this.viewType=viewType;
     }
 
 
@@ -64,48 +67,51 @@ public class VideoFilesAdapter extends RecyclerView.Adapter<VideoFilesAdapter.Vi
         holder.videoDuration.setText(timeConversion((long) milliseconds));
 
         Glide.with(context).load(new File(videoList.get(position).getPath())).into(holder.thumbnail);
-        holder.menu_more.setOnClickListener(new View.OnClickListener() {
-            @SuppressLint("MissingInflatedId")
 
-            @Override
-            public void onClick(View v) {
-                bottomSheetDialog=new BottomSheetDialog(context,R.style.BottomSheetTheme);
-                View bsView=LayoutInflater.from(context).inflate(R.layout.video_bs_layout,v.findViewById(R.id.bottom_sheet));
+        if (viewType==0)
+        {
+            holder.menu_more.setOnClickListener(new View.OnClickListener() {
+                @SuppressLint("MissingInflatedId")
 
-                bsView.findViewById(R.id.bs_play).setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        holder.itemView.performClick();
-                        bottomSheetDialog.dismiss();
-                    }
-                });
-                bsView.findViewById(R.id.bs_rename).setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        AlertDialog.Builder alertDialog = new AlertDialog.Builder(context);
-                        alertDialog.setTitle("Rename to");
-                        EditText editText = new EditText(context);
-                        String path = videoList.get(position).getPath();
-                        final File file = new File(path);
-                        String videoName = file.getName();
-                        videoName = videoName.substring(0, videoName.lastIndexOf("."));
-                        editText.setText(videoName);
-                        alertDialog.setView(editText);
-                        editText.requestFocus();
+                @Override
+                public void onClick(View v) {
+                    bottomSheetDialog=new BottomSheetDialog(context,R.style.BottomSheetTheme);
+                    View bsView=LayoutInflater.from(context).inflate(R.layout.video_bs_layout,v.findViewById(R.id.bottom_sheet));
 
-                        alertDialog.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                            @SuppressLint("NotifyDataSetChanged")
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                if (TextUtils.isEmpty(editText.getText().toString())) {
-                                    Toast.makeText(context, "Can't rename empty file", Toast.LENGTH_SHORT).show();
-                                    return;
-                                }
-                                String onlyPath = Objects.requireNonNull(file.getParentFile()).getAbsolutePath();
-                                String ext = file.getAbsolutePath();
-                                ext = ext.substring(ext.lastIndexOf("."));
-                                String newPath = onlyPath + "/" + editText.getText().toString() + ext;
-                               File newFile = new File(newPath);
+                    bsView.findViewById(R.id.bs_play).setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            holder.itemView.performClick();
+                            bottomSheetDialog.dismiss();
+                        }
+                    });
+                    bsView.findViewById(R.id.bs_rename).setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            AlertDialog.Builder alertDialog = new AlertDialog.Builder(context);
+                            alertDialog.setTitle("Rename to");
+                            EditText editText = new EditText(context);
+                            String path = videoList.get(position).getPath();
+                            final File file = new File(path);
+                            String videoName = file.getName();
+                            videoName = videoName.substring(0, videoName.lastIndexOf("."));
+                            editText.setText(videoName);
+                            alertDialog.setView(editText);
+                            editText.requestFocus();
+
+                            alertDialog.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                                @SuppressLint("NotifyDataSetChanged")
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    if (TextUtils.isEmpty(editText.getText().toString())) {
+                                        Toast.makeText(context, "Can't rename empty file", Toast.LENGTH_SHORT).show();
+                                        return;
+                                    }
+                                    String onlyPath = Objects.requireNonNull(file.getParentFile()).getAbsolutePath();
+                                    String ext = file.getAbsolutePath();
+                                    ext = ext.substring(ext.lastIndexOf("."));
+                                    String newPath = onlyPath + "/" + editText.getText().toString() + ext;
+                                    File newFile = new File(newPath);
                                     boolean rename = file.renameTo(newFile);
                                     if (rename) {
                                         ContentResolver resolver = context.getApplicationContext().getContentResolver();
@@ -127,104 +133,110 @@ public class VideoFilesAdapter extends RecyclerView.Adapter<VideoFilesAdapter.Vi
                                     }
                                 }
                             });
-                        alertDialog.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                dialog.dismiss();
-                            }
-                        });
-                        alertDialog.create().show();
-                        bottomSheetDialog.dismiss();
-                    }
-                });
-                bsView.findViewById(R.id.bs_share).setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        Uri uri=Uri.parse(videoList.get(position).getPath());
-                        Intent shareintent= new Intent(Intent.ACTION_SEND);
-                        shareintent.setType("video/*");
-                        shareintent.putExtra(Intent.EXTRA_STREAM,uri);
-                        context.startActivity(Intent.createChooser(shareintent,"Share Video Via"));
-                        bottomSheetDialog.dismiss();
-                    }
-                });
-
-                bsView.findViewById(R.id.bs_delete).setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        AlertDialog.Builder alertDialog = new AlertDialog.Builder(context);
-                        alertDialog.setTitle("Delete");
-                        alertDialog.setMessage("Do you want to delete this video?");
-                        alertDialog.setPositiveButton("Delete", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                Uri contentUri = ContentUris.withAppendedId(MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
-                                        Long.parseLong(videoList.get(position).getId()));
-
-                                File file=new File(videoList.get(position).getPath());
-                                boolean deleted = file.delete();
-                                if(deleted)
-                                {
-                                    context.getContentResolver().delete(contentUri,null,null);
-                                    videoList.remove(position);
-                                    notifyItemRemoved(position);
-                                    notifyItemRangeChanged(position,videoList.size());
-                                    notifyDataSetChanged();
-                                    Toast.makeText(context, "Video deleted", Toast.LENGTH_SHORT).show();
-                                }else {
-                                    Toast.makeText(context, "Can't be deleted", Toast.LENGTH_SHORT).show();
+                            alertDialog.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    dialog.dismiss();
                                 }
-                            }
-                        });
-                        alertDialog.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                dialog.dismiss();
-                            }
-                        });
-                        alertDialog.show();
-                        bottomSheetDialog.dismiss();;
-                    }
-                });
+                            });
+                            alertDialog.create().show();
+                            bottomSheetDialog.dismiss();
+                        }
+                    });
+                    bsView.findViewById(R.id.bs_share).setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            Uri uri=Uri.parse(videoList.get(position).getPath());
+                            Intent shareintent= new Intent(Intent.ACTION_SEND);
+                            shareintent.setType("video/*");
+                            shareintent.putExtra(Intent.EXTRA_STREAM,uri);
+                            context.startActivity(Intent.createChooser(shareintent,"Share Video Via"));
+                            bottomSheetDialog.dismiss();
+                        }
+                    });
 
-                bsView.findViewById(R.id.bs_properties).setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        AlertDialog.Builder alertDialog=new AlertDialog.Builder(context);
-                        alertDialog.setTitle("Properties");
+                    bsView.findViewById(R.id.bs_delete).setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            AlertDialog.Builder alertDialog = new AlertDialog.Builder(context);
+                            alertDialog.setTitle("Delete");
+                            alertDialog.setMessage("Do you want to delete this video?");
+                            alertDialog.setPositiveButton("Delete", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    Uri contentUri = ContentUris.withAppendedId(MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
+                                            Long.parseLong(videoList.get(position).getId()));
+
+                                    File file=new File(videoList.get(position).getPath());
+                                    boolean deleted = file.delete();
+                                    if(deleted)
+                                    {
+                                        context.getContentResolver().delete(contentUri,null,null);
+                                        videoList.remove(position);
+                                        notifyItemRemoved(position);
+                                        notifyItemRangeChanged(position,videoList.size());
+                                        notifyDataSetChanged();
+                                        Toast.makeText(context, "Video deleted", Toast.LENGTH_SHORT).show();
+                                    }else {
+                                        Toast.makeText(context, "Can't be deleted", Toast.LENGTH_SHORT).show();
+                                    }
+                                }
+                            });
+                            alertDialog.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    dialog.dismiss();
+                                }
+                            });
+                            alertDialog.show();
+                            bottomSheetDialog.dismiss();;
+                        }
+                    });
+
+                    bsView.findViewById(R.id.bs_properties).setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            AlertDialog.Builder alertDialog=new AlertDialog.Builder(context);
+                            alertDialog.setTitle("Properties");
 
 
-                        String one="File: "+videoList.get(position).getDisplayName();
-                        String path=videoList.get(position).getPath();
-                        int indexOfPath=path.lastIndexOf("/");
-                        String two="Path: "+path.substring(0,indexOfPath);
-                        String three="Size: "+android.text.format.Formatter.formatFileSize(context, Long.parseLong(size));
-                        String four="Length: "+timeConversion((long) milliseconds);
-                        String formatName=videoList.get(position).getDisplayName();
-                        int index= formatName.lastIndexOf(".");
-                        String nameFormat=formatName.substring(index+1);
-                        String five= "Format: "+nameFormat;
+                            String one="File: "+videoList.get(position).getDisplayName();
+                            String path=videoList.get(position).getPath();
+                            int indexOfPath=path.lastIndexOf("/");
+                            String two="Path: "+path.substring(0,indexOfPath);
+                            String three="Size: "+android.text.format.Formatter.formatFileSize(context, Long.parseLong(size));
+                            String four="Length: "+timeConversion((long) milliseconds);
+                            String formatName=videoList.get(position).getDisplayName();
+                            int index= formatName.lastIndexOf(".");
+                            String nameFormat=formatName.substring(index+1);
+                            String five= "Format: "+nameFormat;
 
-                        MediaMetadataRetriever mediaMetadataRetriever=new MediaMetadataRetriever();
-                        mediaMetadataRetriever.setDataSource(videoList.get(position).getPath());
-                        String height=mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT);
-                        String width=mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH);
-                        String six ="Resolution: "+width+"x"+height;
-                        alertDialog.setMessage(one+"\n\n"+two+"\n\n"+three+"\n\n"+four+"\n\n"+five+"\n\n"+six);
-                        alertDialog.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                dialog.dismiss();
-                            }
-                        });
-                        alertDialog.show();
-                        bottomSheetDialog.dismiss();
-                    }
-                });
-                bottomSheetDialog.setContentView(bsView);
-                bottomSheetDialog.show();
-            }
-        });
+                            MediaMetadataRetriever mediaMetadataRetriever=new MediaMetadataRetriever();
+                            mediaMetadataRetriever.setDataSource(videoList.get(position).getPath());
+                            String height=mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT);
+                            String width=mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH);
+                            String six ="Resolution: "+width+"x"+height;
+                            alertDialog.setMessage(one+"\n\n"+two+"\n\n"+three+"\n\n"+four+"\n\n"+five+"\n\n"+six);
+                            alertDialog.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    dialog.dismiss();
+                                }
+                            });
+                            alertDialog.show();
+                            bottomSheetDialog.dismiss();
+                        }
+                    });
+                    bottomSheetDialog.setContentView(bsView);
+                    bottomSheetDialog.show();
+                }
+            });
+        } else {
+            holder.menu_more.setVisibility(View.GONE);
+            holder.videoName.setTextColor(Color.WHITE);
+            holder.videoSize.setTextColor(Color.WHITE);
+        }
+
         holder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -235,6 +247,9 @@ public class VideoFilesAdapter extends RecyclerView.Adapter<VideoFilesAdapter.Vi
                 bundle.putParcelableArrayList("videoArrayList",videoList);
                 intent.putExtras(bundle);
                 context.startActivity(intent);
+                if (viewType==1){
+                    ((Activity) context).finish();
+                }
             }
         });
 

@@ -1,17 +1,11 @@
 package com.example.videoplayer;
 
-import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-
 import android.annotation.SuppressLint;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
-import android.media.AudioManager;
 import android.media.MediaMetadataRetriever;
 import android.media.audiofx.AudioEffect;
 import android.net.Uri;
@@ -20,19 +14,21 @@ import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
 import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.ExoPlayer;
-import com.google.android.exoplayer2.ForwardingPlayer;
 import com.google.android.exoplayer2.MediaItem;
 import com.google.android.exoplayer2.PlaybackException;
 import com.google.android.exoplayer2.PlaybackParameters;
 import com.google.android.exoplayer2.Player;
-import com.google.android.exoplayer2.SimpleExoPlayer;
 import com.google.android.exoplayer2.source.ConcatenatingMediaSource;
 import com.google.android.exoplayer2.source.MediaSource;
 import com.google.android.exoplayer2.source.ProgressiveMediaSource;
@@ -53,7 +49,8 @@ public class VideoPlayerActivity extends AppCompatActivity implements View.OnCli
     String videoTitle;
     TextView title;
     ConcatenatingMediaSource concatenatingMediaSource;
-    ImageView nextButton, prevButton, videoBack, lock, unlock, scaling;
+    ImageView nextButton, prevButton, videoBack, lock, unlock, scaling, videoList;
+    VideoFilesAdapter videoFilesAdapter;
 
     private ControlsMode controlsMode;
 
@@ -96,6 +93,7 @@ public class VideoPlayerActivity extends AppCompatActivity implements View.OnCli
         scaling = findViewById(R.id.scaling);
         root = findViewById(R.id.root_layout);
         nightMode=findViewById(R.id.night_mode);
+        videoList=findViewById(R.id.video_list);
         recyclerViewicons = findViewById(R.id.recycler_view_icons);
         title.setText(videoTitle);
         nextButton.setOnClickListener(this);
@@ -103,7 +101,10 @@ public class VideoPlayerActivity extends AppCompatActivity implements View.OnCli
         videoBack.setOnClickListener(this);
         lock.setOnClickListener(this);
         unlock.setOnClickListener(this);
+        videoList.setOnClickListener(this);
         scaling.setOnClickListener(firstListener);
+
+
 
         iconModels.add(new IconModel(R.drawable.right, ""));
         iconModels.add(new IconModel(R.drawable.baseline_nightlight_24, "Night"));
@@ -134,7 +135,7 @@ public class VideoPlayerActivity extends AppCompatActivity implements View.OnCli
                             iconModels.add(new IconModel(R.drawable.high_brightness, "Brightness"));
                             iconModels.add(new IconModel(R.drawable.equalizer, "Equalizer"));
                             iconModels.add(new IconModel(R.drawable.speed, "Speed"));
-                            iconModels.add(new IconModel(R.drawable.subtitle, "Sub Title"));
+
                         }
                         iconModels.set(position, new IconModel(R.drawable.left_arrow, ""));
                         playBackIconsAdapter.notifyDataSetChanged();
@@ -248,6 +249,7 @@ public class VideoPlayerActivity extends AppCompatActivity implements View.OnCli
                     AlertDialog alertDialog1=alertDialog.create();
                     alertDialog1.show();
                 }
+
             }
         });
         playVideo();
@@ -273,6 +275,8 @@ public class VideoPlayerActivity extends AppCompatActivity implements View.OnCli
         player.seekTo(position, C.TIME_UNSET);
         playError();
     }
+
+
 
     private void screenOrientaion(){
         try {
@@ -370,6 +374,11 @@ public class VideoPlayerActivity extends AppCompatActivity implements View.OnCli
 
             }
             finish();
+        }
+        if (v.getId()==R.id.video_list)
+        {
+            PlayListDialog playListDialog=new PlayListDialog(mVideoFiles,videoFilesAdapter);
+            playListDialog.show(getSupportFragmentManager(),playListDialog.getTag());
         }
         if (v.getId() == R.id.lock_unlock) {
 
