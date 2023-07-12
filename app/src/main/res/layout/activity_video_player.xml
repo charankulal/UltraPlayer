@@ -13,7 +13,9 @@
         android:background="@color/black"
         app:controller_layout_id="@layout/custom_playback_view"
 
-        app:hide_on_touch="true"
+        app:hide_on_touch="false"
+        app:show_buffering="when_playing"
+        app:buffered_color="@color/blue"
         app:player_layout_id="@layout/exo_player_view"
         app:resize_mode="fit"
         app:show_timeout="4000"

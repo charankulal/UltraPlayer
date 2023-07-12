@@ -401,6 +401,7 @@ public class VideoPlayerActivity extends AppCompatActivity implements View.OnCli
                 player.stop();
                 position++;
                 playVideo();
+                title.setText(mVideoFiles.get(position).getDisplayName());
             } catch (Exception e) {
                 Toast.makeText(this, "No Next Video in PlayList", Toast.LENGTH_SHORT).show();
                 finish();
@@ -411,6 +412,7 @@ public class VideoPlayerActivity extends AppCompatActivity implements View.OnCli
                 player.stop();
                 position--;
                 playVideo();
+                title.setText(mVideoFiles.get(position).getDisplayName());
             } catch (Exception e) {
                 Toast.makeText(this, "No Previous Video in PlayList", Toast.LENGTH_SHORT).show();
                 finish();
