@@ -23,8 +23,12 @@
         android:theme="@style/Theme.VideoPlayer">
         <activity
             android:name=".VideoPlayerActivity"
-            android:exported="false"
-            android:configChanges="orientation|screenSize|layoutDirection"/>
+            android:exported="true"
+            android:configChanges="orientation|screenSize|layoutDirection|screenLayout|smallestScreenSize|keyboardHidden|uiMode"
+            android:excludeFromRecents="true"
+            android:resizeableActivity="true"
+            android:supportsPictureInPicture="true"
+            />
         <activity
             android:name=".VideoFilesActivity"
             android:exported="false"
